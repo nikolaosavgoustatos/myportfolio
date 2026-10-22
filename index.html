@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Website</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="title">My Portfolio Times</div>
+
+    <nav>
+        <div class="author">by Nikolaos Avgoustatos</div>
+
+        <div class="group">
+            <a href="#" id="geo-link">Geochemical Maps</a>
+            <a href="#" class="soon">LaTeX template</a>
+            <a href="#" class="soon">Geostatistics with R</a>
+        </div>
+        <div class="group">
+            <a href="#" class="soon">C++ projects</a>
+        </div>
+
+        <div class="chapters">
+            <a href="#" class="soon">Light Novels</a>
+            <a href="#" class="soon">Music</a>
+            <a href="#" class="soon">Digital Painting</a>
+            <a href="#" class="soon">2d animation</a>
+            <a href="#" class="soon">3d asset making</a>
+            <a href="#" class="soon">3d animations</a>
+            <a href="#" class="soon">Video Games Development</a>
+        </div>
+    </nav>
+
+    <div class="gallery" id="geo-gallery">
+        <img src="assets/geochemicalmapping/As_map.png" alt="Arsenic map">
+        <img src="assets/geochemicalmapping/finallocations.png" alt="Final sampling locations">
+    </div>
+
+    <script>
+        const geoLink = document.getElementById('geo-link');
+        const geoGallery = document.getElementById('geo-gallery');
+
+        geoLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            geoGallery.classList.toggle('show');
+            geoLink.classList.toggle('active');
+        });
+
+        document.querySelectorAll('a.soon').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+            });
+        });
+    </script>
+</body>
+</html>

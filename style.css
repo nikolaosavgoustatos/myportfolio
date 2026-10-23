@@ -12,6 +12,26 @@
     font-style: normal;
 }
 
+:root{
+    --bg: #F3E9C6;
+    --card: #fbf5de;
+    --frame: #ffffff;
+    --text: #000000;
+    --accent: #b74b4b;
+    --pre: #f6f6f6;
+    --mv: #ece4c4;
+}
+
+:root[data-theme="dark"]{
+    --bg: #1c1a16;
+    --card: #2a2721;
+    --frame: #33302a;
+    --text: #f3e9c6;
+    --accent: #e0766b;
+    --pre: #201e19;
+    --mv: #3a362e;
+}
+
 *{
     margin: 0;
     padding: 0;
@@ -33,72 +53,237 @@ body::-webkit-scrollbar{
 }
 
 body{
+    position: relative;
     width: 100%;
     min-height: 100vh;
     overflow-x: hidden;
-    background-color: #F3E9C6;
-    color: rgb(0, 0, 0);
+    background-color: var(--bg);
+    color: var(--text);
     font-family: 'TNR', 'Times New Roman', Times, serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* moon phase toggle (top-left corner) */
+#theme{
+    position: absolute;
+    top: 2rem;
+    left: 3rem;
+    width: 17rem;
+    height: 12rem;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    z-index: 5;
+}
+
+#theme:active{
+    cursor: grabbing;
+}
+
+#theme:focus-visible{
+    outline: 2px solid var(--accent);
+}
+
+#theme img{
+    position: absolute;
+    display: block;
+    pointer-events: none;
+}
+
+#theme .sun{
+    width: 4rem;
+    left: 12.6rem;
+    top: 4rem;
+}
+
+#theme .earth{
+    width: 4.4rem;
+    left: 3.8rem;
+    top: 3.8rem;
+}
+
+#theme .orbit{
+    position: absolute;
+    left: 1.8rem;
+    top: 1.8rem;
+    width: 8.4rem;
+    height: 8.4rem;
+    border: 1px dashed var(--accent);
+    border-radius: 50%;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+#theme .moon{
+    position: absolute;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+#theme .moon img{
+    position: static;
+    width: 100%;
+    height: 100%;
+}
+
+#theme .moon svg{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .title{
-    font-family: 'Cloister', 'TNR', serif;
+    font-family: 'Cloister', serif;
     font-size: 8rem;
     text-align: center;
     padding-top: 4rem;
 }
 
 nav{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem 4rem;
     padding: 2rem 4rem;
 }
 
 .author{
-    flex: 0 0 100%;
     font-size: 2.4rem;
     font-style: italic;
     text-align: center;
+    margin-bottom: 2rem;
 }
 
-.group{
+/* two category columns */
+.columns{
     display: flex;
-    flex-wrap: wrap;
     justify-content: center;
+    align-items: flex-start;
+    gap: 5rem;
+}
+
+.col h3{
+    font-family: 'TNR', 'Times New Roman', serif;
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+}
+
+.col.geology{
+    flex: 1 1 55%;
+    max-width: 70rem;
+    padding-right: 5rem;
+    border-right: 2px solid var(--accent);
+}
+
+.col.creativity{
+    flex: 1 1 35%;
+    max-width: 40rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.col.creativity h3{
+    align-self: stretch;
+}
+
+/* Geology items: link + preview, alternating sides */
+.item{
+    display: flex;
     align-items: center;
-    gap: 1.5rem 4rem;
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
 }
 
-.group:nth-of-type(1){
-    border-right: 2px solid #b74b4b;
-    padding-right: 4rem;
+.item:nth-of-type(even){
+    flex-direction: row-reverse;
 }
 
-nav .chapters{
-    flex: 0 0 100%;
+.item:nth-of-type(even) > a{
+    text-align: right;
+}
+
+.item > a{
+    flex: 1;
+}
+
+.preview{
+    flex: none;
+    width: 20rem;
+    min-height: 12rem;
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    gap: 1.5rem 4rem;
-    padding-top: 2rem;
-    border-top: 2px solid #b74b4b;
+    background: var(--frame);
+    border: 2px solid var(--accent);
+    overflow: hidden;
+}
+
+.preview img,
+.preview video{
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.preview model-viewer{
+    width: 100%;
+    height: 16rem;
+    background: var(--mv);
+}
+
+.preview audio,
+.preview .midi midi-player{
+    width: 100%;
+}
+
+.preview .note{
+    padding: 1rem;
+    font-size: 1.4rem;
+    font-style: italic;
+}
+
+.preview .dl{
+    margin: 1rem;
+}
+
+/* once a section is open, drop the previews and the zigzag */
+body.browsing .preview{
+    display: none;
+}
+
+body.browsing .item,
+body.browsing .item:nth-of-type(even){
+    flex-direction: row;
+    margin-bottom: 1.5rem;
+}
+
+body.browsing .item:nth-of-type(even) > a{
+    text-align: left;
 }
 
 nav a{
-    font-family: 'Cloister', 'TNR', serif;
-    font-size: 4rem;
-    color: black;
+    font-family: 'TNR', 'Times New Roman', Times, serif;
+    font-size: 3.6rem;
+    color: var(--text);
     transition: 0.3s ease;
     border-bottom: 3px solid transparent;
 }
 
 nav a:hover,
 nav a.active{
-    color: #b74b4b;
-    border-bottom: 3px solid #b74b4b;
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+}
+
+/* the link must not stretch its underline across the whole row */
+.item > a{
+    align-self: center;
 }
 
 /* gallery */
@@ -123,13 +308,13 @@ nav a.active{
 }
 
 .subgroup h2{
-    font-family: 'Cloister', 'TNR', serif;
+    font-family: 'TNR', 'Times New Roman', serif;
     font-size: 3rem;
     font-weight: normal;
-    color: #b74b4b;
+    color: var(--accent);
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #b74b4b;
+    border-bottom: 2px solid var(--accent);
 }
 
 .grid{
@@ -147,12 +332,11 @@ nav a.active{
     gap: 2rem;
 }
 
-/* placeholder card */
 .card{
     display: flex;
     flex-direction: column;
-    border: 2px solid #b74b4b;
-    background: #fbf5de;
+    border: 2px solid var(--accent);
+    background: var(--card);
 }
 
 .card.audio,
@@ -169,7 +353,7 @@ nav a.active{
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
+    background: var(--frame);
     overflow: hidden;
 }
 
@@ -229,7 +413,7 @@ nav a.active{
 .frame model-viewer{
     width: 100%;
     height: 32rem;
-    background: #ece4c4;
+    background: var(--mv);
 }
 
 .midi{
@@ -253,13 +437,13 @@ nav a.active{
     margin: 1rem;
     padding: 0.6rem 1.4rem;
     font-size: 1.6rem;
-    color: #b74b4b;
-    border: 2px solid #b74b4b;
+    color: var(--accent);
+    border: 2px solid var(--accent);
 }
 
 .dl:hover{
-    background: #b74b4b;
-    color: white;
+    background: var(--accent);
+    color: var(--bg);
 }
 
 .textwrap{
@@ -271,7 +455,7 @@ nav a.active{
     cursor: pointer;
     padding: 1rem 1.5rem;
     font-size: 1.6rem;
-    color: #b74b4b;
+    color: var(--accent);
 }
 
 .textwrap pre{
@@ -279,11 +463,21 @@ nav a.active{
     overflow: auto;
     padding: 1rem 1.5rem;
     font-size: 1.3rem;
-    background: #f6f6f6;
+    background: var(--pre);
+    color: var(--text);
     white-space: pre;
     scrollbar-width: none;
 }
 
 .textwrap pre::-webkit-scrollbar{
     display: none;
+}
+
+/* narrow screens: stack the columns */
+@media (max-width: 800px){
+    .title{ font-size: 5rem; padding-top: 7rem; }
+    .columns{ flex-direction: column; align-items: stretch; }
+    .col.geology{ max-width: none; padding-right: 0; border-right: none; }
+    .col.creativity{ max-width: none; }
+    nav a{ font-size: 2.8rem; }
 }

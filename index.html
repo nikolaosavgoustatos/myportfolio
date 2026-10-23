@@ -7,30 +7,69 @@
     <link rel="stylesheet" href="style.css">
     <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+    <script>
+        // light/dark from the moon phase: new moon (0°) = dark, full moon (180°) = light
+        const LIGHT = { bg:[243,233,198], card:[251,245,222], frame:[255,255,255], accent:[183,75,75], pre:[246,246,246], mv:[236,228,196] };
+        const DARK  = { bg:[28,26,22],    card:[42,39,33],    frame:[51,48,42],    accent:[224,118,107], pre:[32,30,25],   mv:[58,54,46] };
+
+        function applyPhase(a) {
+            const t = (1 - Math.cos(a * Math.PI / 180)) / 2;   // 0 = new moon, 1 = full moon
+            const s = document.documentElement.style;
+            for (const k in LIGHT) {
+                const c = LIGHT[k].map((v, i) => Math.round(DARK[k][i] + (v - DARK[k][i]) * t));
+                s.setProperty('--' + k, 'rgb(' + c.join(',') + ')');
+            }
+            s.setProperty('--text', t > 0.45 ? '#000000' : '#f3e9c6');   // flips so text stays readable
+        }
+
+        let moonStart = 180;   // default: full moon = light mode
+        try { const v = parseFloat(localStorage.getItem('moonAngle')); if (!isNaN(v)) moonStart = v; } catch (e) {}
+        applyPhase(moonStart);
+    </script>
 </head>
 <body>
+    <div id="theme" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="360"
+         aria-label="Drag the moon around the Earth to change light and dark mode">
+        <img class="sun" src="darkmode/sun.png" alt="" draggable="false">
+        <div class="orbit"></div>
+        <img class="earth" src="darkmode/earth.png" alt="" draggable="false">
+        <div class="moon" id="moon">
+            <img src="darkmode/moon.png" alt="" draggable="false">
+            <svg viewBox="0 0 100 100"><path id="shade" fill-rule="evenodd" fill="#000" fill-opacity="0.85"/></svg>
+        </div>
+    </div>
+
     <div class="title">My Portfolio Times</div>
 
     <nav>
         <div class="author">by Nikolaos Avgoustatos</div>
 
-        <div class="group">
-            <a href="#" data-folder="geochemicalmapping">Geochemical Maps</a>
-            <a href="#" data-folder="LaTeX projects">LaTeX template</a>
-            <a href="#" data-folder="R">Geostatistics with R</a>
-        </div>
-        <div class="group">
-            <a href="#" data-folder="C++">C++ projects</a>
-        </div>
+        <div class="columns">
+            <section class="col geology">
+                <h3>Geology</h3>
+                <div class="item">
+                    <a href="#" data-folder="geochemicalmapping">Geochemical Mapping</a>
+                    <div class="preview" data-folder="geochemicalmapping"></div>
+                </div>
+                <div class="item">
+                    <a href="#" data-folder="R">Geostatistics with R</a>
+                    <div class="preview" data-folder="R"></div>
+                </div>
+                <div class="item">
+                    <a href="#" data-folder="LaTeX projects">LaTeX Template</a>
+                    <div class="preview" data-folder="LaTeX projects"></div>
+                </div>
+            </section>
 
-        <div class="chapters">
-            <a href="#" data-folder="lightnovels">Light Novels</a>
-            <a href="#" data-folder="music">Music</a>
-            <a href="#" data-folder="digitalpainting">Digital Painting</a>
-            <a href="#" data-folder="2danimation">2d animation</a>
-            <a href="#" data-folder="3dassetmaking">3d asset making</a>
-            <a href="#" data-folder="3danimation">3d animations</a>
-            <a href="#" data-folder="videogames">Video Games Development</a>
+            <section class="col creativity">
+                <h3>Creativity</h3>
+                <a href="#" data-folder="lightnovels">Light Novels</a>
+                <a href="#" data-folder="music">Music</a>
+                <a href="#" data-folder="digitalpainting">Digital Painting</a>
+                <a href="#" data-folder="3dassetmaking">3D Assets</a>
+                <a href="#" data-folder="animation">Animations</a>
+                <a href="#" data-folder="videogames">Video Games</a>
+            </section>
         </div>
     </nav>
 
@@ -47,7 +86,6 @@
             ],
             "LaTeX projects": [],
             "R": [],
-            "C++": [],
             "lightnovels": [],
             "music": [
                 "The Legend of the Samurai.mp3"
@@ -58,11 +96,10 @@
                 "maudpie.png",
                 "maudpie.png"
             ],
-            "2danimation": [],
             "3dassetmaking": [
                 "animechar1/hips.glb"
             ],
-            "3danimation": [],
+            "animation": [],
             "videogames": []
         };
         // ================================
@@ -103,6 +140,53 @@
 
         const downloadLink = (path, label) =>
             el('a', { href: url(path), download: '', class: 'dl', text: label || 'Download' });
+
+        // ---------- moon phase = light / dark ----------
+        const phase = document.getElementById('theme');
+        const moon = document.getElementById('moon');
+        const shade = document.getElementById('shade');
+        const earthEl = phase.querySelector('.earth');
+        let angle = moonStart;   // 0 = new moon (towards the Sun), 180 = full moon
+
+        function setAngle(a, save) {
+            angle = ((a % 360) + 360) % 360;
+            const rad = angle * Math.PI / 180;
+            moon.style.left = (6 + 4.2 * Math.cos(rad) - 1.1) + 'rem';
+            moon.style.top  = (6 - 4.2 * Math.sin(rad) - 1.1) + 'rem';
+
+            // phase shading as seen from Earth: waxing is lit on the right, waning on the left
+            const c = Math.cos(rad), rx = 50 * Math.abs(c), waxing = angle < 180;
+            const sweep = waxing ? (c > 0 ? 0 : 1) : (c > 0 ? 1 : 0);
+            const litHalf = waxing ? 'M50,0 A50,50 0 0 1 50,100' : 'M50,0 A50,50 0 0 0 50,100';
+            shade.setAttribute('d', 'M50,0 A50,50 0 1 1 50,100 A50,50 0 1 1 50,0 Z ' +
+                litHalf + ' A' + rx + ',50 0 0 ' + sweep + ' 50,0 Z');
+
+            applyPhase(angle);
+            phase.setAttribute('aria-valuenow', Math.round(angle));
+            if (save) { try { localStorage.setItem('moonAngle', angle); } catch (e) {} }
+        }
+
+        function pointerAngle(e) {
+            const r = earthEl.getBoundingClientRect();
+            return Math.atan2(-(e.clientY - (r.top + r.height / 2)), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+        }
+
+        let dragging = false;
+        phase.addEventListener('pointerdown', e => {
+            dragging = true;
+            phase.setPointerCapture(e.pointerId);
+            setAngle(pointerAngle(e), false);
+        });
+        phase.addEventListener('pointermove', e => { if (dragging) setAngle(pointerAngle(e), false); });
+        const stopDrag = () => { if (dragging) { dragging = false; setAngle(angle, true); } };
+        phase.addEventListener('pointerup', stopDrag);
+        phase.addEventListener('pointercancel', stopDrag);
+        phase.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setAngle(angle + 10, true); }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setAngle(angle - 10, true); }
+        });
+
+        setAngle(angle, false);
 
         function buildContent(path) {
             const name = path.split('/').pop();
@@ -187,6 +271,18 @@
             }
         }
 
+        // ---------- default view: first item of each Geology folder ----------
+        function renderPreviews() {
+            document.querySelectorAll('.preview').forEach(p => {
+                const folder = p.dataset.folder;
+                const first = (FILES[folder] || [])[0];
+                p.innerHTML = '';
+                if (first) p.append(buildContent('assets/' + folder + '/' + first));
+                else p.append(el('div', { class: 'note', text: 'Coming soon' }));
+            });
+        }
+        renderPreviews();
+
         function render(folder) {
             openCard = null;
             gallery.innerHTML = '';
@@ -260,7 +356,7 @@
         }
 
         document.addEventListener('click', e => {
-            if (e.target.closest('nav')) return;
+            if (e.target.closest('nav') || e.target.closest('#theme')) return;
             const card = e.target.closest('.card.image');
             if (card && gallery.contains(card)) {
                 setOpen(card === openCard ? null : card);
@@ -276,6 +372,7 @@
                 links.forEach(l => l.classList.remove('active'));
                 gallery.classList.remove('show');
                 openCard = null;
+                document.body.classList.toggle('browsing', !wasActive); // hides the default previews
                 if (wasActive) return;
                 a.classList.add('active');
                 gallery.classList.add('show');   // show first so 3D viewers can measure their size

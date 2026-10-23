@@ -31,18 +31,18 @@
     <div id="theme">
         <img class="sun" src="darkmode/sun.png" alt="" draggable="false">
         <div class="orbit"></div>
-        <img class="earth" src="darkmode/earth.png" alt="" draggable="false">
+        <!-- drag area: Earth + orbit (the Sun is outside it and never reacts) -->
+        <div class="hit" id="hit" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="360"
+             aria-label="Drag the moon around the Earth to change light and dark mode"></div>
+        <!-- the Earth sits on top of the drag area so it can be clicked to toggle the moon -->
+        <img class="earth" id="earth" src="darkmode/earth.png" alt="Press the Earth to toggle the moon"
+             draggable="false" role="button" tabindex="0"
+             aria-label="Press the Earth to toggle the moon between light and dark">
         <div class="moon" id="moon">
             <img src="darkmode/moon.png" alt="" draggable="false">
             <svg viewBox="0 0 100 100"><path id="shade" fill-rule="evenodd" fill="#000" fill-opacity="0.85"/></svg>
         </div>
-        <!-- only this circle (Earth + orbit) reacts to the mouse, the Sun does not -->
-        <div class="hit" id="hit" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="360"
-             aria-label="Drag the moon around the Earth to change light and dark mode"></div>
-        <button class="mode" id="mode" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
-            <span class="track"><span class="knob"></span></span>
-            <span class="label">Dark mode</span>
-        </button>
+        <p class="hint">press the earth to toggle the moon</p>
     </div>
 
     <div class="title"><a href="#" id="home">My Portfolio Times</a></div>
@@ -152,11 +152,14 @@
         // ---------- moon phase = light / dark ----------
         const phase = document.getElementById('theme');
         const hit = document.getElementById('hit');
-        const modeBtn = document.getElementById('mode');
+        const earth = document.getElementById('earth');
         const moon = document.getElementById('moon');
         const shade = document.getElementById('shade');
         const earthEl = phase.querySelector('.earth');
         let angle = moonStart;   // 0 = new moon (towards the Sun), 180 = full moon
+
+        // returns true when the current phase counts as dark mode
+        const isDark = () => (1 - Math.cos(angle * Math.PI / 180)) / 2 <= 0.45;
 
         function setAngle(a, save) {
             angle = ((a % 360) + 360) % 360;
@@ -173,7 +176,7 @@
 
             applyPhase(angle);
             hit.setAttribute('aria-valuenow', Math.round(angle));
-            modeBtn.setAttribute('aria-checked', (1 - Math.cos(rad)) / 2 <= 0.45);   // dark mode = moon near new
+            earth.setAttribute('aria-pressed', isDark());
             if (save) { try { localStorage.setItem('moonAngle', angle); } catch (e) {} }
         }
 
@@ -199,7 +202,16 @@
             if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setAngle(angle - 10, true); }
         });
 
-        // dark mode switch: slides the moon to new moon (dark) or full moon (light)
+        // click the Earth: slides the moon to new moon (dark) or full moon (light)
+        function toggleMoon() {
+            cancelAnimationFrame(anim);
+            animateTo(isDark() ? 180 : 0);
+        }
+        earth.addEventListener('click', toggleMoon);
+        earth.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMoon(); }
+        });
+
         let anim = 0;
         function animateTo(target) {
             cancelAnimationFrame(anim);
@@ -214,10 +226,6 @@
             };
             anim = requestAnimationFrame(step);
         }
-        modeBtn.addEventListener('click', () => {
-            const dark = modeBtn.getAttribute('aria-checked') === 'true';
-            animateTo(dark ? 180 : 0);
-        });
 
         setAngle(angle, false);
 

@@ -108,10 +108,28 @@ body{
     top: 4rem;
 }
 
+/* the Earth sits on top of the drag area and reacts to clicks / taps */
 #theme .earth{
     width: 4.4rem;
     left: 3.8rem;
     top: 3.8rem;
+    pointer-events: auto;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.15s ease;
+}
+
+#theme .earth:hover{
+    transform: scale(1.08);
+}
+
+#theme .earth:active{
+    transform: scale(0.94);
+}
+
+#theme .earth:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 0.4rem;
 }
 
 #theme .orbit{
@@ -148,51 +166,22 @@ body{
     height: 100%;
 }
 
-/* dark mode switch under the Earth */
-#theme .mode{
+/* hint text, centred under the Earth */
+#theme .hint{
     position: absolute;
-    left: 6rem;
-    top: 12.2rem;
+    left: 6rem;              /* Earth's centre is at 3.8 + 2.2 = 6rem */
+    top: 11.4rem;
     transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: none;
+    width: 12rem;
+    margin: 0;
     color: var(--text);
     font-family: 'TNR', 'Times New Roman', Times, serif;
-    font-size: 1.8rem;
-    white-space: nowrap;
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-#theme .mode:focus-visible{
-    outline: 2px solid var(--accent);
-}
-
-#theme .track{
-    position: relative;
-    width: 5rem;
-    height: 2.6rem;
-    border: 2px solid var(--accent);
-    border-radius: 1.3rem;
-    background: var(--card);
-    transition: background 0.3s ease;
-}
-
-#theme .knob{
-    position: absolute;
-    top: 0.3rem;
-    left: 0.3rem;
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 50%;
-    background: var(--accent);
-    transition: transform 0.3s ease;
-}
-
-#theme .mode[aria-checked="true"] .knob{
-    transform: translateX(2.4rem);
+    font-size: 1.3rem;
+    font-style: italic;
+    text-align: center;
+    line-height: 1.3;
+    pointer-events: none;
+    opacity: 0.85;
 }
 
 .title{

@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <div class="title">My Portfolio Times</div>
+    <a href="#" class="title" id="home">My Portfolio Times</a>
 
     <nav>
         <div class="author">by Nikolaos Avgoustatos</div>
@@ -330,6 +330,7 @@
         function setOpen(card) {
             const cards = [...gallery.querySelectorAll('.card')];
             const first = new Map(cards.map(c => [c, c.getBoundingClientRect()]));
+            const prev = openCard;
 
             if (openCard) openCard.classList.remove('open');
             openCard = card;
@@ -350,8 +351,10 @@
                 ], { duration: 450, easing: 'cubic-bezier(.2, .8, .2, 1)' });
             });
 
-            if (card) {
-                setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 460);
+            // centre the opened image (or the one just closed) so it never sticks to the top/bottom
+            const target = card || prev;
+            if (target) {
+                setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 460);
             }
         }
 
@@ -363,6 +366,17 @@
             } else if (openCard) {
                 setOpen(null);
             }
+        });
+
+        // clicking the title returns to the default view
+        document.getElementById('home').addEventListener('click', e => {
+            e.preventDefault();
+            links.forEach(l => l.classList.remove('active'));
+            gallery.classList.remove('show');
+            gallery.innerHTML = '';
+            openCard = null;
+            document.body.classList.remove('browsing');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
         links.forEach(a => {

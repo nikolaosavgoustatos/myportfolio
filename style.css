@@ -23,13 +23,13 @@
 }
 
 :root[data-theme="dark"]{
-    --bg: #1c1a16;
-    --card: #2a2721;
-    --frame: #33302a;
+    --bg: #171717;
+    --card: #222222;
+    --frame: #2b2b2b;
     --text: #f3e9c6;
     --accent: #e0766b;
-    --pre: #201e19;
-    --mv: #3a362e;
+    --pre: #1c1c1c;
+    --mv: #303030;
 }
 
 *{
@@ -69,18 +69,30 @@ body{
     top: 2rem;
     left: 3rem;
     width: 17rem;
-    height: 12rem;
-    cursor: grab;
-    touch-action: none;
-    user-select: none;
+    height: 15rem;
+    pointer-events: none;      /* the container itself is not clickable (so the Sun isn't) */
     z-index: 5;
 }
 
-#theme:active{
+/* the only draggable area: Earth + orbit */
+#theme .hit{
+    position: absolute;
+    left: 0.7rem;
+    top: 0.7rem;
+    width: 10.6rem;
+    height: 10.6rem;
+    border-radius: 50%;
+    pointer-events: auto;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+#theme .hit:active{
     cursor: grabbing;
 }
 
-#theme:focus-visible{
+#theme .hit:focus-visible{
     outline: 2px solid var(--accent);
 }
 
@@ -134,6 +146,53 @@ body{
     inset: 0;
     width: 100%;
     height: 100%;
+}
+
+/* dark mode switch under the Earth */
+#theme .mode{
+    position: absolute;
+    left: 6rem;
+    top: 12.2rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: none;
+    color: var(--text);
+    font-family: 'TNR', 'Times New Roman', Times, serif;
+    font-size: 1.8rem;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+#theme .mode:focus-visible{
+    outline: 2px solid var(--accent);
+}
+
+#theme .track{
+    position: relative;
+    width: 5rem;
+    height: 2.6rem;
+    border: 2px solid var(--accent);
+    border-radius: 1.3rem;
+    background: var(--card);
+    transition: background 0.3s ease;
+}
+
+#theme .knob{
+    position: absolute;
+    top: 0.3rem;
+    left: 0.3rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: var(--accent);
+    transition: transform 0.3s ease;
+}
+
+#theme .mode[aria-checked="true"] .knob{
+    transform: translateX(2.4rem);
 }
 
 .title{
@@ -285,7 +344,7 @@ nav a{
     font-size: 3.6rem;
     color: var(--text);
     transition: 0.3s ease;
-    border-bottom: 3px solid transparent;
+    border-bottom: 3px solid var(--text);   /* always visible, same colour as the text */
 }
 
 nav a:hover,
@@ -488,7 +547,8 @@ nav a.active{
 
 /* narrow screens: stack the columns */
 @media (max-width: 800px){
-    .title{ font-size: 5rem; padding-top: 7rem; }
+    .title{ font-size: 5rem; padding-top: 12rem; }
+    #theme{ transform: scale(0.7); transform-origin: top left; left: 1.5rem; top: 1rem; }
     .columns{ flex-direction: column; align-items: stretch; }
     .col.geology{ max-width: none; padding-right: 0; border-right: none; }
     .col.creativity{ max-width: none; }

@@ -10,7 +10,7 @@
     <script>
         // light/dark from the moon phase: new moon (0°) = dark, full moon (180°) = light
         const LIGHT = { bg:[243,233,198], card:[251,245,222], frame:[255,255,255], accent:[183,75,75], pre:[246,246,246], mv:[236,228,196] };
-        const DARK  = { bg:[28,26,22],    card:[42,39,33],    frame:[51,48,42],    accent:[224,118,107], pre:[32,30,25],   mv:[58,54,46] };
+        const DARK  = { bg:[23,23,23],    card:[34,34,34],    frame:[43,43,43],    accent:[224,118,107], pre:[28,28,28],   mv:[48,48,48] };   // bg = #171717 at new moon
 
         function applyPhase(a) {
             const t = (1 - Math.cos(a * Math.PI / 180)) / 2;   // 0 = new moon, 1 = full moon
@@ -19,7 +19,7 @@
                 const c = LIGHT[k].map((v, i) => Math.round(DARK[k][i] + (v - DARK[k][i]) * t));
                 s.setProperty('--' + k, 'rgb(' + c.join(',') + ')');
             }
-            s.setProperty('--text', t > 0.45 ? '#000000' : '#f3e9c6');   // flips so text stays readable
+            s.setProperty('--text', t > 0.45 ? '#000000' : '#f3e9c6');   // t <= 0.45 counts as dark mode   // flips so text stays readable
         }
 
         let moonStart = 180;   // default: full moon = light mode
@@ -28,8 +28,7 @@
     </script>
 </head>
 <body>
-    <div id="theme" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="360"
-         aria-label="Drag the moon around the Earth to change light and dark mode">
+    <div id="theme">
         <img class="sun" src="darkmode/sun.png" alt="" draggable="false">
         <div class="orbit"></div>
         <img class="earth" src="darkmode/earth.png" alt="" draggable="false">
@@ -37,6 +36,13 @@
             <img src="darkmode/moon.png" alt="" draggable="false">
             <svg viewBox="0 0 100 100"><path id="shade" fill-rule="evenodd" fill="#000" fill-opacity="0.85"/></svg>
         </div>
+        <!-- only this circle (Earth + orbit) reacts to the mouse, the Sun does not -->
+        <div class="hit" id="hit" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="360"
+             aria-label="Drag the moon around the Earth to change light and dark mode"></div>
+        <button class="mode" id="mode" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
+            <span class="track"><span class="knob"></span></span>
+            <span class="label">Dark mode</span>
+        </button>
     </div>
 
     <div class="title"><a href="#" id="home">My Portfolio Times</a></div>
@@ -145,6 +151,8 @@
 
         // ---------- moon phase = light / dark ----------
         const phase = document.getElementById('theme');
+        const hit = document.getElementById('hit');
+        const modeBtn = document.getElementById('mode');
         const moon = document.getElementById('moon');
         const shade = document.getElementById('shade');
         const earthEl = phase.querySelector('.earth');
@@ -164,7 +172,8 @@
                 litHalf + ' A' + rx + ',50 0 0 ' + sweep + ' 50,0 Z');
 
             applyPhase(angle);
-            phase.setAttribute('aria-valuenow', Math.round(angle));
+            hit.setAttribute('aria-valuenow', Math.round(angle));
+            modeBtn.setAttribute('aria-checked', (1 - Math.cos(rad)) / 2 <= 0.45);   // dark mode = moon near new
             if (save) { try { localStorage.setItem('moonAngle', angle); } catch (e) {} }
         }
 
@@ -174,18 +183,40 @@
         }
 
         let dragging = false;
-        phase.addEventListener('pointerdown', e => {
+        hit.addEventListener('pointerdown', e => {
+            cancelAnimationFrame(anim);
             dragging = true;
-            phase.setPointerCapture(e.pointerId);
+            hit.setPointerCapture(e.pointerId);
             setAngle(pointerAngle(e), false);
         });
-        phase.addEventListener('pointermove', e => { if (dragging) setAngle(pointerAngle(e), false); });
+        hit.addEventListener('pointermove', e => { if (dragging) setAngle(pointerAngle(e), false); });
         const stopDrag = () => { if (dragging) { dragging = false; setAngle(angle, true); } };
-        phase.addEventListener('pointerup', stopDrag);
-        phase.addEventListener('pointercancel', stopDrag);
-        phase.addEventListener('keydown', e => {
+        hit.addEventListener('pointerup', stopDrag);
+        hit.addEventListener('pointercancel', stopDrag);
+        hit.addEventListener('keydown', e => {
+            cancelAnimationFrame(anim);
             if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setAngle(angle + 10, true); }
             if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setAngle(angle - 10, true); }
+        });
+
+        // dark mode switch: slides the moon to new moon (dark) or full moon (light)
+        let anim = 0;
+        function animateTo(target) {
+            cancelAnimationFrame(anim);
+            const from = angle;
+            const delta = ((target - from + 540) % 360) - 180;   // shortest way round
+            const t0 = performance.now(), dur = 700;
+            const step = now => {
+                const k = Math.min(1, (now - t0) / dur);
+                const ease = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+                setAngle(from + delta * ease, k === 1);
+                if (k < 1) anim = requestAnimationFrame(step);
+            };
+            anim = requestAnimationFrame(step);
+        }
+        modeBtn.addEventListener('click', () => {
+            const dark = modeBtn.getAttribute('aria-checked') === 'true';
+            animateTo(dark ? 180 : 0);
         });
 
         setAngle(angle, false);

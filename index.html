@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Website</title>
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
 </head>
 <body>
     <div class="title">My Portfolio Times</div>
@@ -13,43 +15,271 @@
         <div class="author">by Nikolaos Avgoustatos</div>
 
         <div class="group">
-            <a href="#" id="geo-link">Geochemical Maps</a>
-            <a href="#" class="soon">LaTeX template</a>
-            <a href="#" class="soon">Geostatistics with R</a>
+            <a href="#" data-folder="geochemicalmapping">Geochemical Maps</a>
+            <a href="#" data-folder="LaTeX projects">LaTeX template</a>
+            <a href="#" data-folder="R">Geostatistics with R</a>
         </div>
         <div class="group">
-            <a href="#" class="soon">C++ projects</a>
+            <a href="#" data-folder="C++">C++ projects</a>
         </div>
 
         <div class="chapters">
-            <a href="#" class="soon">Light Novels</a>
-            <a href="#" class="soon">Music</a>
-            <a href="#" class="soon">Digital Painting</a>
-            <a href="#" class="soon">2d animation</a>
-            <a href="#" class="soon">3d asset making</a>
-            <a href="#" class="soon">3d animations</a>
-            <a href="#" class="soon">Video Games Development</a>
+            <a href="#" data-folder="lightnovels">Light Novels</a>
+            <a href="#" data-folder="music">Music</a>
+            <a href="#" data-folder="digitalpainting">Digital Painting</a>
+            <a href="#" data-folder="2danimation">2d animation</a>
+            <a href="#" data-folder="3dassetmaking">3d asset making</a>
+            <a href="#" data-folder="3danimation">3d animations</a>
+            <a href="#" data-folder="videogames">Video Games Development</a>
         </div>
     </nav>
 
-    <div class="gallery" id="geo-gallery">
-        <img src="assets/geochemicalmapping/As_map.png" alt="Arsenic map">
-        <img src="assets/geochemicalmapping/finallocations.png" alt="Final sampling locations">
-    </div>
+    <main class="gallery" id="gallery"></main>
 
     <script>
-        const geoLink = document.getElementById('geo-link');
-        const geoGallery = document.getElementById('geo-gallery');
+        // ===== PUT YOUR PATHS HERE =====
+        // Paths are relative to the folder: "animechar1/hips.glb" means
+        // assets/3dassetmaking/animechar1/hips.glb
+        const FILES = {
+            "geochemicalmapping": [
+                "As_map.png",
+                "finallocations.png"
+            ],
+            "LaTeX projects": [],
+            "R": [],
+            "C++": [],
+            "lightnovels": [],
+            "music": [
+                "The Legend of the Samurai.mp3"
+            ],
+            "digitalpainting": [
+                "maudpie.png",
+                "maudpie.png",
+                "maudpie.png",
+                "maudpie.png"
+            ],
+            "2danimation": [],
+            "3dassetmaking": [
+                "animechar1/hips.glb"
+            ],
+            "3danimation": [],
+            "videogames": []
+        };
+        // ================================
 
-        geoLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            geoGallery.classList.toggle('show');
-            geoLink.classList.toggle('active');
+        const gallery = document.getElementById('gallery');
+        const links = document.querySelectorAll('nav a[data-folder]');
+        let openCard = null;
+
+        const EXT = {
+            image: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif'],
+            video: ['mp4', 'webm', 'ogv', 'mov'],
+            audio: ['mp3', 'wav', 'ogg', 'flac', 'm4a'],
+            midi:  ['mid', 'midi'],
+            model: ['glb', 'gltf'],
+            pdf:   ['pdf'],
+            text:  ['cpp', 'c', 'h', 'hpp', 'py', 'r', 'rmd', 'tex', 'sty', 'cls', 'bib',
+                    'txt', 'md', 'js', 'json', 'csv', 'cs', 'gd', 'html', 'css']
+        };
+
+        const extOf = n => n.split('.').pop().toLowerCase();
+        function typeOf(name) {
+            const ext = extOf(name);
+            for (const t in EXT) if (EXT[t].includes(ext)) return t;
+            return 'other';
+        }
+        const isSong = name => ['audio', 'midi'].includes(typeOf(name));
+        const url = p => p.split('/').map(encodeURIComponent).join('/');
+
+        function el(tag, attrs = {}, children = []) {
+            const e = document.createElement(tag);
+            for (const k in attrs) {
+                if (k === 'text') e.textContent = attrs[k];
+                else e.setAttribute(k, attrs[k]);
+            }
+            [].concat(children).forEach(c => e.append(c));
+            return e;
+        }
+
+        const downloadLink = (path, label) =>
+            el('a', { href: url(path), download: '', class: 'dl', text: label || 'Download' });
+
+        function buildContent(path) {
+            const name = path.split('/').pop();
+            const src = url(path);
+
+            switch (typeOf(name)) {
+                case 'image':
+                    return el('img', { src, alt: name, loading: 'lazy' });
+
+                case 'video':
+                    return el('video', { src, controls: '', preload: 'metadata' });
+
+                case 'audio':
+                    return el('audio', { src, controls: '', preload: 'none' });
+
+                case 'midi': {
+                    const wrap = el('div', { class: 'midi' });
+                    const player = document.createElement('midi-player');
+                    player.setAttribute('src', src);
+                    player.setAttribute('sound-font', '');
+                    wrap.append(player);
+                    return wrap;
+                }
+
+                case 'model': {
+                    const mv = document.createElement('model-viewer');
+                    mv.setAttribute('src', src);
+                    mv.setAttribute('camera-controls', '');
+                    mv.setAttribute('auto-rotate', '');
+                    mv.setAttribute('loading', 'eager');
+                    mv.setAttribute('reveal', 'auto');
+                    mv.setAttribute('environment-image', 'neutral');
+                    mv.setAttribute('shadow-intensity', '1');
+                    mv.setAttribute('touch-action', 'pan-y');
+                    mv.setAttribute('alt', name);
+
+                    mv.addEventListener('error', async ev => {
+                        let msg;
+                        try {
+                            const r = await fetch(src);
+                            if (!r.ok) {
+                                msg = 'File not found (HTTP ' + r.status + '): ' + decodeURIComponent(src) +
+                                    '. Check the folder and file name, including capital letters.';
+                            } else {
+                                const head = new Uint8Array((await r.arrayBuffer()).slice(0, 4));
+                                const magic = String.fromCharCode(...head);
+                                if (magic !== 'glTF') {
+                                    msg = 'This is not a real .glb file (it starts with "' + magic + '"). ' +
+                                        'In Blender use File > Export > glTF 2.0 and choose Format: glTF Binary (.glb). ' +
+                                        'Renaming a .blend to .glb does not work.';
+                                } else {
+                                    const detail = ev.detail && ev.detail.sourceError ? ev.detail.sourceError.message : 'unknown error';
+                                    msg = 'The file was found but could not be read: ' + detail;
+                                }
+                            }
+                        } catch (err) {
+                            msg = 'Cannot read files here. Open the site through Live Server (http://...), not by double-clicking index.html.';
+                        }
+                        mv.replaceWith(el('div', { class: 'note', text: msg }));
+                    });
+                    return mv;
+                }
+
+                case 'pdf':
+                    return el('embed', { src, type: 'application/pdf' });
+
+                case 'text': {
+                    const pre = el('pre');
+                    const d = el('details', {}, [el('summary', { text: 'View file' }), pre]);
+                    d.addEventListener('toggle', () => {
+                        if (d.open && !pre.textContent) {
+                            pre.textContent = 'Loading...';
+                            fetch(src).then(r => r.text()).then(t => pre.textContent = t)
+                                .catch(() => pre.textContent = 'Could not load file.');
+                        }
+                    });
+                    return el('div', { class: 'textwrap' }, [d, downloadLink(path)]);
+                }
+
+                default:
+                    return downloadLink(path, extOf(name) === 'blend' ? 'Download .blend' : 'Download');
+            }
+        }
+
+        function render(folder) {
+            openCard = null;
+            gallery.innerHTML = '';
+            const files = FILES[folder] || [];
+
+            if (!files.length) {
+                gallery.append(el('p', { class: 'empty', text: 'No files in this folder yet.' }));
+                return;
+            }
+
+            // group by subfolder (paths are relative to the folder)
+            const groups = {};
+            files.forEach(rel => {
+                const parts = rel.split('/');
+                parts.pop();
+                const key = parts.join(' / ');
+                (groups[key] = groups[key] || []).push(rel);
+            });
+
+            Object.keys(groups).sort().forEach(key => {
+                const section = el('section', { class: 'subgroup' });
+                if (key) section.append(el('h2', { text: key }));
+
+                const allSongs = groups[key].every(rel => isSong(rel));
+                const grid = el('div', { class: 'grid' + (allSongs ? ' inline' : '') });
+
+                groups[key].forEach(rel => {
+                    const full = 'assets/' + folder + '/' + rel;
+                    const name = rel.split('/').pop();
+                    const parts = [el('div', { class: 'frame' }, buildContent(full))];
+
+                    if (isSong(name)) {
+                        parts.push(el('div', { class: 'songtitle', text: name.replace(/\.[^.]+$/, '') }));
+                    }
+
+                    grid.append(el('figure', { class: 'card ' + typeOf(name) }, parts));
+                });
+
+                section.append(grid);
+                gallery.append(section);
+            });
+        }
+
+        // ---------- image expand / collapse (FLIP animation) ----------
+        function setOpen(card) {
+            const cards = [...gallery.querySelectorAll('.card')];
+            const first = new Map(cards.map(c => [c, c.getBoundingClientRect()]));
+
+            if (openCard) openCard.classList.remove('open');
+            openCard = card;
+            if (card) card.classList.add('open');
+
+            cards.forEach(c => {
+                const f = first.get(c);
+                const l = c.getBoundingClientRect();
+                const dx = f.left - l.left;
+                const dy = f.top - l.top;
+                const sx = f.width / l.width;
+                const sy = f.height / l.height;
+                if (!dx && !dy && sx === 1 && sy === 1) return;
+
+                c.animate([
+                    { transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+                    { transformOrigin: 'top left', transform: 'none' }
+                ], { duration: 450, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+            });
+
+            if (card) {
+                setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 460);
+            }
+        }
+
+        document.addEventListener('click', e => {
+            if (e.target.closest('nav')) return;
+            const card = e.target.closest('.card.image');
+            if (card && gallery.contains(card)) {
+                setOpen(card === openCard ? null : card);
+            } else if (openCard) {
+                setOpen(null);
+            }
         });
 
-        document.querySelectorAll('a.soon').forEach(function (a) {
-            a.addEventListener('click', function (e) {
+        links.forEach(a => {
+            a.addEventListener('click', e => {
                 e.preventDefault();
+                const wasActive = a.classList.contains('active');
+                links.forEach(l => l.classList.remove('active'));
+                gallery.classList.remove('show');
+                openCard = null;
+                if (wasActive) return;
+                a.classList.add('active');
+                gallery.classList.add('show');   // show first so 3D viewers can measure their size
+                render(a.dataset.folder);
             });
         });
     </script>

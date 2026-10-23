@@ -23,6 +23,13 @@
 
 html{
     font-size: 62.5%;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar{
+    display: none;
 }
 
 body{
@@ -41,7 +48,6 @@ body{
     padding-top: 4rem;
 }
 
-/* nav: author row, then the two groups, then the links row */
 nav{
     display: flex;
     flex-wrap: wrap;
@@ -66,13 +72,11 @@ nav{
     gap: 1.5rem 4rem;
 }
 
-/* vertical line between the two groups */
 .group:nth-of-type(1){
     border-right: 2px solid #b74b4b;
     padding-right: 4rem;
 }
 
-/* the links row inside nav */
 nav .chapters{
     flex: 0 0 100%;
     display: flex;
@@ -97,44 +101,189 @@ nav a.active{
     border-bottom: 3px solid #b74b4b;
 }
 
-/* "Coming soon" chapters */
-nav a.soon::after{
-    content: "Coming soon";
-    font-family: 'TNR', 'Times New Roman', Times, serif;
-    font-size: 1.4rem;
-    font-style: italic;
-    vertical-align: super;
-    margin-left: 0.8rem;
-    color: #b74b4b;
-}
-
-nav a.soon,
-nav a.soon:hover{
-    color: black;
-    border-bottom: 3px solid transparent;
-    cursor: default;
-}
-
 /* gallery */
 .gallery{
     display: none;
-    grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
-    gap: 3rem;
     padding: 2rem 4rem 5rem;
 }
 
 .gallery.show{
-    display: grid;
+    display: block;
 }
 
-.gallery img{
+.empty{
+    text-align: center;
+    font-size: 2rem;
+    font-style: italic;
+    padding: 3rem 0;
+}
+
+.subgroup{
+    margin-bottom: 4rem;
+}
+
+.subgroup h2{
+    font-family: 'Cloister', 'TNR', serif;
+    font-size: 3rem;
+    font-weight: normal;
+    color: #b74b4b;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #b74b4b;
+}
+
+.grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
+    align-items: start;
+    gap: 3rem;
+}
+
+/* music: compact cards that only wrap their content */
+.grid.inline{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+/* placeholder card */
+.card{
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #b74b4b;
+    background: #fbf5de;
+}
+
+.card.audio,
+.card.midi{
+    flex-direction: row;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.frame{
+    flex: 1;
+    min-height: 22rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    overflow: hidden;
+}
+
+.card.audio .frame,
+.card.midi .frame{
+    flex: none;
+    min-height: 0;
+    padding: 1rem 1.5rem;
+    background: transparent;
+}
+
+.songtitle{
+    padding: 0 2.5rem 0 0.5rem;
+    font-size: 2.2rem;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+/* images: click to expand */
+.card.image{
+    cursor: zoom-in;
+}
+
+.card.image .frame{
+    min-height: 0;
+}
+
+.card.image.open{
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 2;
+    cursor: zoom-out;
+}
+
+.frame img,
+.frame video,
+.frame embed{
     width: 100%;
     height: auto;
-    border: 2px solid #b74b4b;
-    background: white;
+    display: block;
 }
 
-section{
-    min-height: 100vh;
-    padding: 5rem 9% 5rem;
+.card.image.open .frame img{
+    max-height: 85vh;
+    object-fit: contain;
+}
+
+.frame embed{
+    height: 40rem;
+}
+
+.frame audio{
+    width: 30rem;
+    max-width: 100%;
+}
+
+.frame model-viewer{
+    width: 100%;
+    height: 32rem;
+    background: #ece4c4;
+}
+
+.midi{
+    width: auto;
+}
+
+.midi midi-player{
+    display: block;
+    width: 30rem;
+    max-width: 100%;
+}
+
+.note{
+    padding: 1.5rem;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.dl{
+    display: inline-block;
+    margin: 1rem;
+    padding: 0.6rem 1.4rem;
+    font-size: 1.6rem;
+    color: #b74b4b;
+    border: 2px solid #b74b4b;
+}
+
+.dl:hover{
+    background: #b74b4b;
+    color: white;
+}
+
+.textwrap{
+    width: 100%;
+    align-self: stretch;
+}
+
+.textwrap summary{
+    cursor: pointer;
+    padding: 1rem 1.5rem;
+    font-size: 1.6rem;
+    color: #b74b4b;
+}
+
+.textwrap pre{
+    max-height: 30rem;
+    overflow: auto;
+    padding: 1rem 1.5rem;
+    font-size: 1.3rem;
+    background: #f6f6f6;
+    white-space: pre;
+    scrollbar-width: none;
+}
+
+.textwrap pre::-webkit-scrollbar{
+    display: none;
 }
